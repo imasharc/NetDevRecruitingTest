@@ -60,4 +60,32 @@ Wybór BFS w tym rozwiązaniu: Wybrano BFS ze względu na dobre praktyki utrzyma
 - **Testy jednostkowe:** W VS: View > Test Explorer > Run All (3 testy powinny przejść). Z terminala: `dotnet test` w solution. Coverage: `dotnet test --collect:"XPlat Code Coverage"` (cel: >90%).
 - Wymagania: .NET 8 SDK, NuGet: NUnit, NUnit3TestAdapter, coverlet.collector.
 
-Rozwiązanie jest maintainable – łatwe do rozszerzenia na kolejne zadania.
+## Zadanie 2: Zapytania do bazy danych
+
+### Opis rozwiązania
+Zadanie wymaga 3 zapytań LINQ do schematu bazy (Employees, Teams, VacationPackages, Vacations). Zaimplementowano w VacationService (SRP: tylko logika zapytań, DIP via interfejs IVacationService). Użyto EF Core z fluent config dla relacji (unidirectional dla minimalizmu). Dla b: Liczenie dni – pełne: (Until - Since).Days +1, partial: Ceiling(Hours / 8), tylko zakończone (< Now, rok 2025). "W całości datą przeszłą" interpretowane jako DateUntil < Now (wyklucza dzisiejszy dzień, bo nie jest w pełni przeszły). Eager loading (Include) optymalizuje. Sample data w seed dla demo/testów.
+
+Kod w:
+- src/Domain/Team.cs, VacationPackage.cs, Vacation.cs (modele z relacjami).
+- src/Data/AppDbContext.cs (DbContext z fluent API).
+- src/Services/IVacationService.cs i VacationService.cs (LINQ queries).
+- Tests/UnitTests/VacationTests.cs (testy z in-memory DB, edge cases: partial, future, 0 vacations).
+
+### Zauważone błędy w zadaniu
+- Hardcoded rok 2019 w a/c – brak parametru, ale zachowałem dla zgodności.
+- Schemat ma PositionId – nieużywane, ale dodane dla kompletności.
+- Partial vacations: Brak specyfikacji przelicznika godzin – założyłem 8h/dzień (konfigurowalny).
+- "Dni zużyte" w b: Tylko zakończone (< Now), ignorując przyszłe/trwające; "w całości datą przeszłą" – interpretacja wyklucza dzisiejszy dzień.
+
+### Poprawki względem oryginalnego zadania
+- Ujednolicono nazwy: Vacation (singular) dla klasy, Vacations dla DbSet – konwencja EF.
+- Dodano walidacje (ArgumentNull w serwisie) i exceptions – brak w oryginale.
+- Unidirectional relations (brak WithMany prop dla VacationPackage/Superior) – minimalizm, unika niepotrzebnych kolekcji (SRP).
+- Przelicznik partial: Math.Ceiling dla dni – domenowa decyzja, konfigurowalna.
+- Filtr w b: .Where(x => x.UsedDays > 0) – zwraca tylko pracowników z zużytymi dniami przeszłymi, rozumianymi jako najpóźniej dzień wczorajszy
+- Eager loading – optymalizacja, zapobiega N+1 queries.
+- Testy/testowalność: In-memory DB dla izolacji, pokrycie edge (partial, 0 dni).
+
+### Uruchomienie i testowanie Zadania 2
+- **Demo:** W VS: F5 na NetDevRecruitingTest. Z terminala: cd NetDevRecruitingTest > dotnet run. Wyświetla wyniki a/b/c z seed data.
+- **Testy:** W VS: Test Explorer > Run All. Z terminala: dotnet test. Coverage: dotnet test --collect:"XPlat Code Coverage".
