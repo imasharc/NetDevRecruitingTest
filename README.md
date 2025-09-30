@@ -113,3 +113,7 @@ Kod w:
 - Filtr: Tylko zakończone (< Now) i bieżący rok (DateSince.Year == Now.Year) – spójne z zadaniem 2b, ignoruje przyszłe/trwające.
 - Granica ustawiona na 0: Math.Max(0, granted - used) – zapobiega ujemnym, co mogłoby crashować UI.
 - Testy: Oddzielny plik FreeDaysTests.cs – pokrycie edge, w tym overused = 0.
+
+### Uruchomienie i testowanie Zadania 3
+- **Demo**: W VS: F5 na NetDevRecruitingTest (rozszerzone o Zad.3). Z terminala: cd NetDevRecruitingTest > dotnet run. Wyświetla free days dla sample employees (Jan:15, Kamil:19, Anna:20) z seed data.
+- **Testy**: W VS: Test Explorer > Run All (4 testy powinny przejść). Z terminala: dotnet test. Coverage: dotnet test --collect:"XPlat Code Coverage" (cel: >90%).
