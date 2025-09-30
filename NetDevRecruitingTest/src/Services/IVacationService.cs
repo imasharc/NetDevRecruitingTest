@@ -8,5 +8,6 @@ namespace NetDevRecruitingTest.src.Services
         IEnumerable<(Employee Employee, int UsedDays)> GetEmployeesWithUsedDaysInCurrentYear();
         IEnumerable<Team> GetTeamsWithoutVacationsIn2019();
         int CountFreeDaysForEmployee(Employee employee, List<Vacation> vacations, VacationPackage vacationPackage);
+        bool IfEmployeeCanRequestVacation(Employee employee, List<Vacation> vacations, VacationPackage vacationPackage);
     }
 }
