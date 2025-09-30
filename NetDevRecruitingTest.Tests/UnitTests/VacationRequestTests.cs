@@ -2,6 +2,10 @@
 using NetDevRecruitingTest.src.Data;
 using NetDevRecruitingTest.src.Domain;
 using NetDevRecruitingTest.src.Services;
+using NUnit.Framework;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace NetDevRecruitingTest.Tests.UnitTests;
 
@@ -23,6 +27,41 @@ public class VacationRequestTests
     }
 
     [Test]
+    public void employee_can_request_vacation()
+    {
+        var jan = _context.Employees.First(e => e.Id == 1);
+        var janVacations = _context.Vacations.Where(v => v.EmployeeId == 1).ToList();
+        var package = _context.VacationPackages.First(p => p.Id == 1);
+
+        var canRequest = _service.IfEmployeeCanRequestVacation(jan, janVacations, package);
+        Assert.That(canRequest, Is.True);  // Jan ma 15 wolnych dni (20 - 5), więc może złożyć wniosek
+    }
+
+    [Test]
+    public void employee_cant_request_vacation()
+    {
+        // Dodaj dodatkowy urlop dla Jana, by wykorzystać wszystkie 20 dni
+        var extraVacation = new Vacation 
+        { 
+            Id = 4, 
+            EmployeeId = 1, 
+            DateSince = new DateTime(2025, 3, 1), 
+            DateUntil = new DateTime(2025, 3, 15), 
+            IsPartialVacation = false, 
+            NumberOfHours = 0 
+        }; // 15 dni, razem z 5 dniami = 20 dni
+        _context.Vacations.Add(extraVacation);
+        _context.SaveChanges();
+
+        var jan = _context.Employees.First(e => e.Id == 1);
+        var janVacations = _context.Vacations.Where(v => v.EmployeeId == 1).ToList();
+        var package = _context.VacationPackages.First(p => p.Id == 1);
+
+        var canRequest = _service.IfEmployeeCanRequestVacation(jan, janVacations, package);
+        Assert.That(canRequest, Is.False);  // Jan wykorzystał 20 dni, więc nie może złożyć wniosku
+    }
+
+    [Test]
     public void IfEmployeeCanRequestVacation_WithFreeDays_ReturnsTrue()
     {
         var jan = _context.Employees.First(e => e.Id == 1);
@@ -36,8 +75,8 @@ public class VacationRequestTests
     [Test]
     public void IfEmployeeCanRequestVacation_NoFreeDays_ReturnsFalse()
     {
-        // Mock: Dodaj extra vacation dla Jana, by wykorzystać wszystkie 20 dni
-        var extraVacation = new Vacation { Id = 5, EmployeeId = 1, DateSince = new DateTime(2025, 3, 1), DateUntil = new DateTime(2025, 3, 20), IsPartialVacation = false, NumberOfHours = 0 };
+        // Mock: Dodaj extra vacation dla Jana, by przekroczyć 20
+        var extraVacation = new Vacation { Id = 5, EmployeeId = 1, DateSince = new DateTime(2025, 3, 1), DateUntil = new DateTime(2025, 3, 20), IsPartialVacation = false, NumberOfHours = 0 };  // 20 dni
         _context.Vacations.Add(extraVacation);
         _context.SaveChanges();
 
@@ -46,18 +85,7 @@ public class VacationRequestTests
         var package = _context.VacationPackages.First(p => p.Id == 1);
 
         var canRequest = _service.IfEmployeeCanRequestVacation(jan, janVacations, package);
-        Assert.That(canRequest, Is.False);  // 0 wolnych dni
-    }
-
-    [Test]
-    public void IfEmployeeCanRequestVacation_NoVacations_ReturnsTrue()
-    {
-        var anna = _context.Employees.First(e => e.Id == 3);
-        var annaVacations = _context.Vacations.Where(v => v.EmployeeId == 3).ToList();  // Pusta
-        var package = _context.VacationPackages.First(p => p.Id == 1);
-
-        var canRequest = _service.IfEmployeeCanRequestVacation(anna, annaVacations, package);
-        Assert.That(canRequest, Is.True);  // 20 wolnych dni > 0
+        Assert.That(canRequest, Is.False);  // 20 - (5 + 20) = 0 dni
     }
 
     [Test]
