@@ -117,3 +117,29 @@ Kod w:
 ### Uruchomienie i testowanie Zadania 3
 - **Demo**: W VS: F5 na NetDevRecruitingTest (rozszerzone o Zad.3). Z terminala: cd NetDevRecruitingTest > dotnet run. Wyświetla free days dla sample employees (Jan:15, Kamil:19, Anna:20) z seed data.
 - **Testy**: W VS: Test Explorer > Run All (4 testy powinny przejść). Z terminala: dotnet test. Coverage: dotnet test --collect:"XPlat Code Coverage" (cel: >90%).
+
+## Zadanie 4: Sprawdzanie możliwości zgłoszenia wniosku urlopowego
+
+### Opis rozwiązania
+Zadanie wymaga zaimplementowania metody `IfEmployeeCanRequestVacation` w klasie `VacationService`, która sprawdza, czy pracownik może złożyć wniosek urlopowy, opierając się na dostępności wolnych dni urlopowych. Rozwiązanie wykorzystuje logikę z zadania 3 (`CountFreeDaysForEmployee`) dla ponownego użycia kodu (DRY), co zapewnia spójność obliczeń. Metoda waliduje wejście (null, zgodność roku i pakietu), filtruje zakończone urlopy w bieżącym roku (30 września 2025 r.) i zwraca `true`, jeśli wolne dni przekraczają 0, w przeciwnym razie `false`. Zgodność z SOLID: SRP (tylko decyzja), OCP (gotowa na rozszerzenie kryteriów). Demo w Program.cs i testy weryfikują różne przypadki.
+
+Kod w:
+- src/Services/IVacationService.cs i VacationService.cs (metoda z LINQ i walidacją).
+- Tests/UnitTests/VacationRequestTests.cs (testy z in-memory DB, edge cases: wolne dni, brak dni, null).
+
+### Zauważone błędy w zadaniu
+- Brak specyfikacji minimalnej liczby dni potrzebnych do wniosku (założono ≥1).
+- Niejasne, czy uwzględniać urlopy trwające (DateSince < Now < DateUntil) – interpretacja "zakończone" wyklucza takie przypadki.
+- Brak definicji bieżącej daty – przyjęto 30 września 2025 r. z kontekstu.
+- Brak obsługi błędów wejścia (null, niezgodność danych) – potencjalne wyjątki runtime.
+
+### Poprawki względem oryginalnego zadania
+- Dodano walidacje: ArgumentNullException dla null, ArgumentException dla mismatched year/package ID – zwiększa robustness.
+- Reuse CountFreeDaysForEmployee – eliminuje duplikację, spójne z zadaniem 3.
+- Filtr: Tylko zakończone urlopy (< Now) i bieżący rok – zgodne z logiką zadania 2b/3.
+- Czysta funkcja: Bez stanu, gotowa na DI dla daty (np. IDateTimeProvider).
+- Testy: Pokrycie scenariuszy (wolne dni, brak dni, null, przyszłe) – brak w oryginale.
+
+### Uruchomienie i testowanie Zadania 4
+- **Demo:** W VS: F5 na NetDevRecruitingTest (rozszerzone o Zad.4). Z terminala: cd NetDevRecruitingTest > dotnet run. Wyświetla wyniki z sample data (np. Jan: true, po wykorzystaniu 20 dni: false).
+- **Testy:** W VS: Test Explorer > Run All (4 testy powinny przejść). Z terminala: dotnet test. Coverage: dotnet test --collect:"XPlat Code Coverage" (cel: >90%).

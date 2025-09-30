@@ -78,5 +78,20 @@ namespace NetDevRecruitingTest.src.Services
             int freeDays = vacationPackage.GrantedDays - (int)usedDays;
             return Math.Max(0, freeDays); // Zapobiegaj ujemnym wartościom
         }
+
+        public bool IfEmployeeCanRequestVacation(Employee employee, List<Vacation> vacations, VacationPackage vacationPackage)
+        {
+            if (employee == null || vacations == null || vacationPackage == null)
+                throw new ArgumentNullException("Pracownik, wakacje ani opcja urlopowa nie mogą być nulllem.");
+
+            if (vacationPackage.Year != DateTime.Now.Year)
+                throw new ArgumentException("Rok pakietu urlopowego musi być ten sam co obecny rok.");
+
+            if (employee.VacationPackageId != vacationPackage.Id)
+                throw new ArgumentException("Paket urlopowy nie pasuje do przypisanego pakietu pracownika.");
+
+            int freeDays = CountFreeDaysForEmployee(employee, vacations, vacationPackage);
+            return freeDays > 0;
+        }
     }
 }
