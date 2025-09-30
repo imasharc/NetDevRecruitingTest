@@ -143,3 +143,24 @@ Kod w:
 ### Uruchomienie i testowanie Zadania 4
 - **Demo:** W VS: F5 na NetDevRecruitingTest (rozszerzone o Zad.4). Z terminala: cd NetDevRecruitingTest > dotnet run. Wyświetla wyniki z sample data (np. Jan: true, po wykorzystaniu 20 dni: false).
 - **Testy:** W VS: Test Explorer > Run All (4 testy powinny przejść). Z terminala: dotnet test. Coverage: dotnet test --collect:"XPlat Code Coverage" (cel: >90%).
+
+## Zadanie 5: Testy funkcjonalności wniosku urlopowego
+
+### Opis rozwiązania
+Zadanie wymaga zaimplementowania testów jednostkowych weryfikujących działanie metody `IfEmployeeCanRequestVacation` z zadania 4. Testy zostały dodane w pliku `VacationRequestTests.cs` i wykorzystują in-memory bazę danych do izolacji. Dwa proste testy sprawdzają przypadki: gdy pracownik może złożyć wniosek (wolne dni > 0) oraz gdy nie może (brak wolnych dni). Logika opiera się na istniejącym seed data, z dodatkowym mockiem urlopu dla scenariusza negatywnego. Podejście zapewnia zgodność z TDD (Test-Driven Development) i wysoką testowalność, zgodnie z zasadami SOLID (SRP dla izolacji testów).
+
+Kod w:
+- Tests/UnitTests/VacationRequestTests.cs (dwa nowe testy: employee_can_request_vacation, employee_cant_request_vacation).
+
+### Zauważone błędy w zadaniu
+- Brak specyfikacji szczegółowych kryteriów testów (np. minimalna liczba dni, edge cases jak null).
+
+### Poprawki względem oryginalnego zadania
+- Dodano dwa testy pokrywające podstawowe scenariusze (wolne dni i brak dni) – brak w oryginale.
+- Użyto mocków (dodatkowy urlop) dla pełnego pokrycia – zwiększa robustność.
+- Zachowano istniejącą strukturę testów (SetUp, TearDown) – spójność z zadaniami 2-4.
+- Testy są proste i skupione na funkcjonalności, bez zbędnej złożoności.
+
+### Uruchomienie i testowanie Zadania 5
+- **Testy:** W VS: Test Explorer > Run All (2 nowe testy powinny przejść). Z terminala: cd NetDevRecruitingTest.Tests > dotnet test. Coverage: dotnet test --collect:"XPlat Code Coverage" (cel: >90%).
+- Wymagania: .NET 8 SDK, NuGet: NUnit, NUnit3TestAdapter, coverlet.collector.
