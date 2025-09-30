@@ -89,3 +89,27 @@ Kod w:
 ### Uruchomienie i testowanie Zadania 2
 - **Demo:** W VS: F5 na NetDevRecruitingTest. Z terminala: cd NetDevRecruitingTest > dotnet run. Wyświetla wyniki a/b/c z seed data.
 - **Testy:** W VS: Test Explorer > Run All. Z terminala: dotnet test. Coverage: dotnet test --collect:"XPlat Code Coverage".
+
+## Zadanie 3: Obliczanie pozostałych dni urlopowych
+
+### Opis rozwiązania
+Zadanie wymaga uzupełnienia metody obliczającej liczbę pozostałych dni urlopowych dla pracownika w bieżącym roku, na podstawie puli z pakietu (GrantedDays) minus zużyte dni z zakończonych urlopów. Zaimplementowano w warstwie Services (VacationService, rozszerzając IVacationService – DIP dla wstrzykiwania zależności i testowalności). Logika używa LINQ do filtrowania i sumowania (efektywne O(n) dla listy vacations, czysta funkcja bez side-effects). Bieżąca data hardcoded jako 30 września 2025 r. (zgodnie z kontekstem), ale w produkcji rekomenduję wstrzykiwanie IDateTimeProvider (abstrakcja dla testów). Obliczenia dni: pełne urlopy – (DateUntil - DateSince).Days + 1; częściowe – Math.Ceiling(NumberOfHours / 8.0) z konfigurowalnym przelicznikiem (8h/dzień). Tylko zakończone urlopy (< bieżąca data, w bieżącym roku). Sample data w Program.cs i seed dla demo/testów.
+
+Kod w:
+- src/Domain/Employee.cs, Vacation.cs i VacationPackage.cs (modele z relacjami, bez zmian).
+- src/Services/IVacationService.cs i VacationService.cs (metoda CountFreeDaysForEmployee z LINQ i walidacją).
+- Tests/UnitTests/FreeDaysTests.cs (testy z in-memory DB, edge cases: pełne/częściowe, brak urlopów, przyszłe, przekroczenie puli).
+
+### Zauważone błędy w zadaniu
+- Brak specyfikacji przelicznika godzin dla częściowych urlopów (IsPartialVacation) – założyłem 8h/dzień, ale mogłoby być konfigurowalne (np. per firma).
+- "Dni urlopowych ma do wykorzystania" – niejasne, czy uwzględniać urlopy trwające (DateSince < Now < DateUntil); interpretacja "w całości datą przeszłą" sugeruje tylko zakończone (< Now).
+- Bieżący rok: Nie określony (założyłem z VacationPackage.Year, walidacja matches Now.Year).
+- Brak obsługi ujemnych wyników (jeśli used > granted) – mogłoby prowadzić do błędów; brak walidacji wejścia (nulls, mismatched IDs).
+- Schemat: PositionId nieużywane, ale obecne; Vacations mnoga w nazwie, ale singular w klasie.
+
+### Poprawki względem oryginalnego zadania
+- Dodano walidacje: ArgumentNullException dla nulls, ArgumentException dla mismatched year/package ID – brak w oryginale, dla robustness.
+- Przelicznik partial: Math.Ceiling(Hours / 8.0) – domenowa decyzja, konfigurowalna stała.
+- Filtr: Tylko zakończone (< Now) i bieżący rok (DateSince.Year == Now.Year) – spójne z zadaniem 2b, ignoruje przyszłe/trwające.
+- Granica ustawiona na 0: Math.Max(0, granted - used) – zapobiega ujemnym, co mogłoby crashować UI.
+- Testy: Oddzielny plik FreeDaysTests.cs – pokrycie edge, w tym overused = 0.

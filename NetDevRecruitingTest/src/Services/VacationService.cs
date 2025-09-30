@@ -51,5 +51,32 @@ namespace NetDevRecruitingTest.src.Services
                 .Where(t => !t.Employees.Any(e => e.Vacations.Any(v => v.DateSince.Year == 2019)))
                 .ToList();
         }
+
+        public int CountFreeDaysForEmployee(Employee employee, List<Vacation> vacations, VacationPackage vacationPackage)
+        {
+            var currentDate = new DateTime(2025, 9, 29); // Bieżąca data z zapytania; realnie użyjemy DateTime.Now
+            var currentYear = currentDate.Year;
+
+            if (vacationPackage.Year != currentYear)
+            {
+                throw new ArgumentException("Rok urlopu musi się zgadzać z rokiem bieżącym");
+            }
+
+            if (employee.VacationPackageId != vacationPackage.Id)
+            {
+                throw new ArgumentException("Urlop nie pasuje do opcji urlopowej przypisanej pracownikowi");
+            }
+
+            double usedDays = vacations
+                .Where(v => v.EmployeeId == employee.Id && // Bezpieczeństwo: filtruj tylko urlopy pracownika
+                            v.DateSince.Year == currentYear &&
+                            v.DateUntil < currentDate)
+                .Sum(v => v.IsPartialVacation
+                    ? Math.Ceiling((double)v.NumberOfHours / 8)
+                    : (v.DateUntil - v.DateSince).Days + 1);
+
+            int freeDays = vacationPackage.GrantedDays - (int)usedDays;
+            return Math.Max(0, freeDays); // Zapobiegaj ujemnym wartościom
+        }
     }
 }
