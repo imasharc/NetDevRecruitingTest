@@ -51,6 +51,26 @@ internal class Program
         Console.WriteLine("\nZad.2c: Teams without vacations in 2019");
         foreach (var team in vacationService.GetTeamsWithoutVacationsIn2019())
             Console.WriteLine(team.Name);  // Java
+
+        // Nowe: Demo Zad.3 (wolne dni) - użycie mock data z seed
+        // Pobierz employee, vacations, package dla Jana i Kamila
+        var jan = context.Employees.First(e => e.Id == 1);
+        var janVacations = context.Vacations.Where(v => v.EmployeeId == 1).ToList();
+        var package = context.VacationPackages.First(p => p.Id == 1);
+
+        var janFreeDays = vacationService.CountFreeDaysForEmployee(jan, janVacations, package);
+        Console.WriteLine($"\nZad.3: Free days for Jan Kowalski: {janFreeDays}");  // 20 - 5 = 15 (ignoruje future)
+
+        var kamil = context.Employees.First(e => e.Id == 2);
+        var kamilVacations = context.Vacations.Where(v => v.EmployeeId == 2).ToList();
+        var kamilFreeDays = vacationService.CountFreeDaysForEmployee(kamil, kamilVacations, package);
+        Console.WriteLine($"Free days for Kamil Nowak: {kamilFreeDays}");  // 20 - 1 = 19
+
+        // Dodatkowy mock: employee bez urlopów (Anna)
+        var anna = context.Employees.First(e => e.Id == 3);
+        var annaVacations = context.Vacations.Where(v => v.EmployeeId == 3).ToList();  // pusta
+        var annaFreeDays = vacationService.CountFreeDaysForEmployee(anna, annaVacations, package);
+        Console.WriteLine($"Free days for Anna Mariacka: {annaFreeDays}");  // 20
     }
 
     private static void SeedData(AppDbContext context)
