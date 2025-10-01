@@ -1,6 +1,18 @@
 ﻿# NetDevRecruitingTest
 
-Rozwiązanie zadania rekrutacyjnego w .NET 8. Projekt skupia się na clean code, SOLID (SRP dla separacji logiki, DIP dla interfejsów), testach jednostkowych (NUnit) i obsłudze błędów (walidacje, exceptions). Struktura: src/Domain dla modeli, src/Services dla biznesu, Tests dla testów. Użyto BFS dla efektywności, cache dla O(1) lookup.
+Rozwiązanie zadania rekrutacyjnego w .NET 8.
+Projekt skupia się na:
+- clean code,
+- SOLID (SRP dla separacji logiki, DIP dla interfejsów),
+- testach jednostkowych (NUnit)
+- obsłudze błędów (walidacje, exceptions).
+
+Struktura:
+- src/Domain dla modeli,
+- src/Services dla biznesu,
+- Tests dla testów.
+
+Użyto BFS dla efektywności, cache dla O(1) lookup.
 
 ## 📑 Spis treści
 
