@@ -2,6 +2,17 @@
 
 Rozwiązanie zadania rekrutacyjnego w .NET 8. Projekt skupia się na clean code, SOLID (SRP dla separacji logiki, DIP dla interfejsów), testach jednostkowych (NUnit) i obsłudze błędów (walidacje, exceptions). Struktura: src/Domain dla modeli, src/Services dla biznesu, Tests dla testów. Użyto BFS dla efektywności, cache dla O(1) lookup.
 
+## 📑 Spis treści
+
+- [🏗️ Zadanie 1: Optymalizacja struktury hierarchii pracowników](#zadanie-1-optymalizacja-struktury-hierarchii-pracowników)
+- [🗄️ Zadanie 2: Zapytania do bazy danych](#zadanie-2-zapytania-do-bazy-danych)
+- [📅 Zadanie 3: Obliczanie pozostałych dni urlopowych](#zadanie-3-obliczanie-pozostałych-dni-urlopowych)
+- [✅ Zadanie 4: Sprawdzanie możliwości zgłoszenia wniosku urlopowego](#zadanie-4-sprawdzanie-możliwości-zgłoszenia-wniosku-urlopowego)
+- [🧪 Zadanie 5: Testy funkcjonalności wniosku urlopowego](#zadanie-5-testy-funkcjonalności-wniosku-urlopowego)
+- [⚡ Zadanie 6: Optymalizacja liczby zapytań SQL](#zadanie-6-optymalizacja-liczby-zapytań-sql)
+
+---
+
 ## Zadanie 1: Optymalizacja struktury hierarchii pracowników
 
 ### Opis rozwiązania
