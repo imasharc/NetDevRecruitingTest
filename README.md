@@ -164,3 +164,61 @@ Kod w:
 ### Uruchomienie i testowanie Zadania 5
 - **Testy:** W VS: Test Explorer > Run All (2 nowe testy powinny przejść). Z terminala: cd NetDevRecruitingTest.Tests > dotnet test. Coverage: dotnet test --collect:"XPlat Code Coverage" (cel: >90%).
 - Wymagania: .NET 8 SDK, NuGet: NUnit, NUnit3TestAdapter, coverlet.collector.
+
+## Zadanie 6: Optymalizacja liczby zapytań SQL
+
+### Opis rozwiązania
+Zadanie wymaga analizy i opisania sposobów optymalizacji liczby zapytań SQL w scenariuszu, gdzie parametry metody `CountFreeDaysForEmployee` z zadania 3 (np. `Employee`, `List<Vacation>`, `VacationPackage`) są pobierane bezpośrednio z bazy danych. Rozwiązanie koncentruje się na zminimalizowaniu problemu N+1 i poprawie wydajności dla schematu bazy danych z relacjami (Employees, Vacations, VacationPackages, Teams). Zaproponowano sześć metod optymalizacji, z uwzględnieniem kontekstu hierarchii pracowników i urlopów. Rekomendacja obejmuje kombinację Eager Loading i widoku SQL dla najlepszego balansu między prostotą a skalowalnością. Analiza obejmuje zalety, wady i przykłady implementacji, zgodne z best practices .NET Core i EF Core.
+
+Kod w:
+- Brak nowego kodu (zadanie opisowe), ale dotyczy src/Services/VacationService.cs (metoda CountFreeDaysForEmployee z potencjalną optymalizacją).
+
+### Zauważone błędy w zadaniu
+- Brak specyfikacji wielkości datasetu – optymalizacja zależy od liczby pracowników/urlopów.
+- Niejasne, czy uwzględniać przyszłe urlopy w agregacji – interpretacja zgodna z zadaniem 3 (ignorowane).
+- Brak wskazania, czy baza jest relacyjna (zakładam SQL Server z EF Core).
+- Nie określono, czy hierarchia (z zadania 1) wpływa na zapytania – skupiono się na urlopach.
+
+### Poprawki względem oryginalnego zadania
+- Dodano szczegółowy opis sześciu metod optymalizacji – brak w oryginale, zwiększa zrozumienie.
+- Uwzględniono kontekst hierarchii (choć nieistotny dla urlopów) dla spójności z zadaniami 1-5.
+- Przykłady SQL (widoki, stored procedures) są kompletne i gotowe do użycia.
+- Analiza zalet/wad każdej metody – ułatwia wybór w zależności od scenariusza.
+
+### Sposoby optymalizacji liczby zapytań SQL
+1. **Eager Loading (Załaduj wszystko naraz)**
+   - **Opis**: Użycie `Include` w EF Core do załadowania powiązanych encji (np. `Vacations`, `VacationPackage`) w jednym zapytaniu z JOIN. Przykład: `context.Employees.Include(e => e.Vacations).Include(e => e.VacationPackage).First(e => e.Id == employeeId)`.
+   - **Zaleta**: Eliminuje N+1 (jedno zapytanie).
+   - **Wada**: Większe zużycie pamięci przy dużych relacjach.
+
+2. **Lazy Loading (Opóźnione ładowanie z kontrolą)**
+   - **Opis**: Explicit ładowanie z `Load` (np. `context.Entry(employee).Collection(e => e.Vacations).Load()`) dla kontrolowanego dostępu.
+   - **Zaleta**: Ładuje dane na żądanie, oszczędza zasoby.
+   - **Wada**: Ryzyko N+1 bez optymalizacji.
+
+3. **Projektowanie widoku (View) lub materializowanej tabeli**
+   - **Opis**: Tworzenie widoku SQL agregującego dane, np. `CREATE VIEW vw_EmployeeVacationSummary AS SELECT e.Id, vp.GrantedDays - COALESCE(SUM(CASE WHEN v.IsPartialVacation THEN CEILING(v.NumberOfHours / 8.0) ELSE DATEDIFF(day, v.DateSince, v.DateUntil) + 1 END), 0) as FreeDays FROM Employees e JOIN VacationPackages vp ON e.VacationPackageId = vp.Id LEFT JOIN Vacations v ON e.Id = v.EmployeeId AND v.DateUntil < GETDATE() GROUP BY e.Id, vp.GrantedDays`.
+   - **Zaleta**: Przesuwa obliczenia na serwer, szybkie zapytania.
+   - **Wada**: Wymaga utrzymania (aktualizacja, indeksy).
+
+4. **Użycie Stored Procedures**
+   - **Opis**: Jedna procedura składowana, np. `CREATE PROCEDURE sp_GetEmployeeFreeDays @EmployeeId INT AS SELECT e.Id, vp.GrantedDays - COALESCE(SUM(CASE WHEN v.IsPartialVacation THEN CEILING(v.NumberOfHours / 8.0) ELSE DATEDIFF(day, v.DateSince, v.DateUntil) + 1 END), 0) as FreeDays FROM Employees e JOIN VacationPackages vp ON e.VacationPackageId = vp.Id LEFT JOIN Vacations v ON e.Id = v.EmployeeId AND v.DateUntil < GETDATE() WHERE e.Id = @EmployeeId GROUP BY e.Id, vp.GrantedDays`.
+   - **Zaleta**: Optymalizacja na serwerze, pojedyncze wywołanie.
+   - **Wada**: Mniejsza elastyczność.
+
+5. **Batching i Paging**
+   - **Opis**: Pobieranie danych partiami, np. `context.Employees.Where(e => e.TeamId == teamId).Skip(0).Take(100).Include(e => e.Vacations).ToList()`.
+   - **Zaleta**: Redukuje pamięć i czas dla dużych datasetów.
+   - **Wada**: Wymaga logiki pobierania kolejnych partii.
+
+6. **Caching wyników**
+   - **Opis**: Użycie MemoryCache, np. `memoryCache.GetOrCreate("EmployeeFreeDays_" + employeeId, entry => context.Employees.Include(e => e.Vacations).First(e => e.Id == employeeId))`.
+   - **Zaleta**: Zmniejsza zapytania przy powtarzalnych wywołaniach.
+   - **Wada**: Ryzyko nieaktualnych danych.
+
+### Rekomendacja
+Najlepsze podejście to kombinacja **Eager Loading** (proste wdrożenie w EF Core) i **widoku SQL** (agregacja na serwerze). Eager Loading eliminuje N+1, a widok optymalizuje obliczenia dla skalowalności. Kombinacja eager loading i widoku SQL jest jednym z najlepszych podejść w kontekście optymalizacji zapytań EF Core, szczególnie dla scenariuszy z relacjami i agregacjami jak w naszym przypadku (obliczanie wolnych dni urlopowych na podstawie pracowników, urlopów i pakietów). Jednak "najlepsze" zależy od specyfiki systemu – skali danych, częstotliwości zapytań, złożoności obliczeń i wymagań utrzymaniowych.
+
+### Uruchomienie i testowanie Zadania 6
+- **Analiza:** Zadanie opisowe, nie wymaga kodu. Testy istniejących metod (np. VacationService) z optymalizacjami można uruchomić w VS (Test Explorer > Run All) lub z terminala: cd NetDevRecruitingTest.Tests > dotnet test. Coverage: dotnet test --collect:"XPlat Code Coverage" (cel: >90%).
+- Wymagania: .NET 8 SDK, EF Core, SQL Server (dla widoku/procedur).
