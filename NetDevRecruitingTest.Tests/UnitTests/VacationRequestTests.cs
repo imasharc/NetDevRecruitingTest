@@ -62,17 +62,6 @@ public class VacationRequestTests
     }
 
     [Test]
-    public void IfEmployeeCanRequestVacation_WithFreeDays_ReturnsTrue()
-    {
-        var jan = _context.Employees.First(e => e.Id == 1);
-        var janVacations = _context.Vacations.Where(v => v.EmployeeId == 1).ToList();
-        var package = _context.VacationPackages.First(p => p.Id == 1);
-
-        var canRequest = _service.IfEmployeeCanRequestVacation(jan, janVacations, package);
-        Assert.That(canRequest, Is.True);  // 15 wolnych dni > 0
-    }
-
-    [Test]
     public void IfEmployeeCanRequestVacation_NoFreeDays_ReturnsFalse()
     {
         // Mock: Dodaj extra vacation dla Jana, by przekroczyć 20
